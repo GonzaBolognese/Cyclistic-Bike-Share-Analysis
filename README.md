@@ -11,7 +11,9 @@ Tras el análisis, se encontraron tres patrones de comportamiento distintivos:
 * **Duración del Viaje:** Los usuarios ocasionales realizan viajes significativamente más largos en promedio.
 * **Patrón Semanal:** El uso de los miembros es constante durante la semana laboral (sugiriendo traslados al trabajo), mientras que el uso de los ocasionales se dispara los fines de semana (sugiriendo ocio).
 
-![Gráfico de Viajes por Día de la Semana](Rplot02.png)
+![Gráfico de Viajes por Usuario](01_total_rides_by_type.png)
+![Gráfico de Duración Promedio de Viaje](02_avg_duration_by_type.png)
+![Gráfico de Viajes por Día de la Semana](03_rides_by_weekday.png)
 
 ## 3. Recomendaciones Estratégicas
 Basado en los hallazgos, se proponen las siguientes acciones:
@@ -21,8 +23,8 @@ Basado en los hallazgos, se proponen las siguientes acciones:
 
 ## 4. Herramientas Utilizadas
 * **Lenguaje:** R
-* **Paquetes:** `tidyverse` (para manipulación de datos), `lubridate` (para manejo de fechas), `ggplot2` (para visualizaciones)
+* **Paquetes:** `tidyverse` (para manipulación de datos), `ggplot2` (para visualizaciones)
 * **Entorno:** RStudio / Jupyter Notebook
 
 ---
-*El análisis completo, incluyendo el proceso de limpieza y el código, se puede encontrar en el siguiente cuaderno: [Cyclistic_Case_Study.ipynb](Cyclistic_Case_Study.ipynb)*
+*El análisis completo, incluyendo el proceso de limpieza y el código, se puede encontrar en el siguiente cuaderno: [Cyclistic_Case_Study.ipynb](cyclistic_case_study.Rmd)*
