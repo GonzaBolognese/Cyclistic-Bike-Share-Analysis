@@ -1,0 +1,201 @@
+# Análisis de Datos Cyclistic: Diferencias entre Miembros y Ocasionales
+
+**Autor:** Gonzalo Bolognese
+**Fecha:** 29 de julio de 2025
+
+## 1. Preguntar (Ask)
+
+### 1.1. Objetivo del Negocio
+El objetivo principal, definido por la directora de marketing Lily Moreno, es diseñar una nueva estrategia de marketing para convertir a los ciclistas ocasionales en miembros anuales. Esta iniciativa se basa en la conclusión de los analistas financieros de que los miembros anuales son considerablemente más rentables que los ciclistas ocasionales.
+
+### 1.2. Pregunta de Análisis Clave
+Para alcanzar el objetivo de negocio, se me ha asignado responder la siguiente pregunta: **¿Cómo utilizan las bicicletas de Cyclistic de manera diferente los miembros anuales y los ciclistas ocasionales?**
+
+## 2. Preparar (Prepare)
+
+### 2.1. Carga de los Datos
+Se cargan las librerías necesarias para el análisis (`tidyverse` y `lubridate`) y los cinco archivos `.csv` que contienen los datos de Divvy para el período Q1 2019 - Q1 2020.
+
+library(tidyverse)
+
+Q1_2019 <- read.csv('Divvy_Trips_2019_Q1.csv')
+Q2_2019 <- read.csv('Divvy_Trips_2019_Q2.csv')
+Q3_2019 <- read.csv('Divvy_Trips_2019_Q3.csv')
+Q4_2019 <- read.csv('Divvy_Trips_2019_Q4.csv')
+Q1_2020 <- read.csv('Divvy_Trips_2020_Q1.csv')
+
+## 3. Procesar (Process)
+
+### 3.1. Estandarización y Selección de Columnas
+Al analizar los 5 archivos, se confirmó que los nombres y la cantidad de columnas no son consistentes. Para solucionar esto, se seleccionará un subconjunto de columnas comunes a todos los dataframes y se estandarizarán sus nombres. Esto nos permitirá unirlos de manera confiable.
+
+# Renombrar columnas en Q2_2019
+Q2_2019 <- Q2_2019 %>%
+  rename(start_time = X01...Rental.Details.Local.Start.Time, 
+         end_time = X01...Rental.Details.Local.End.Time)
+
+# Renombrar columnas en Q1_2020
+Q1_2020 <- Q1_2020 %>%
+  rename(start_time = started_at, 
+         end_time = ended_at)
+         
+        
+# Se procesa cada dataframe para seleccionar, renombrar y ESTANDARIZAR EL TIPO de las columnas clave.
+
+Q1_2019_lean <- Q1_2019 %>%
+  select(
+    trip_id,
+    start_time,
+    end_time,
+    rideable_type = bikeid,
+    start_station_name = from_station_name,
+    start_station_id = from_station_id,
+    end_station_name = to_station_name,
+    end_station_id = to_station_id,
+    user_type = usertype
+  ) %>%
+  mutate(across(c(trip_id, rideable_type, start_station_id, end_station_id), as.character))
+
+Q2_2019_lean <- Q2_2019 %>%
+  select(
+    trip_id = `X01...Rental.Details.Rental.ID`,
+    start_time,
+    end_time,
+    rideable_type = `X01...Rental.Details.Bike.ID`,
+    start_station_name = `X03...Rental.Start.Station.Name`,
+    start_station_id = `X03...Rental.Start.Station.ID`,
+    end_station_name = `X02...Rental.End.Station.Name`,
+    end_station_id = `X02...Rental.End.Station.ID`,
+    user_type = `User.Type`
+  ) %>%
+  mutate(across(c(trip_id, rideable_type, start_station_id, end_station_id), as.character))
+
+Q3_2019_lean <- Q3_2019 %>%
+  select(
+    trip_id,
+    start_time,
+    end_time,
+    rideable_type = bikeid,
+    start_station_name = from_station_name,
+    start_station_id = from_station_id,
+    end_station_name = to_station_name,
+    end_station_id = to_station_id,
+    user_type = usertype
+  ) %>%
+  mutate(across(c(trip_id, rideable_type, start_station_id, end_station_id), as.character))
+
+Q4_2019_lean <- Q4_2019 %>%
+  select(
+    trip_id,
+    start_time,
+    end_time,
+    rideable_type = bikeid,
+    start_station_name = from_station_name,
+    start_station_id = from_station_id,
+    end_station_name = to_station_name,
+    end_station_id = to_station_id,
+    user_type = usertype
+  ) %>%
+  mutate(across(c(trip_id, rideable_type, start_station_id, end_station_id), as.character))
+
+Q1_2020_lean <- Q1_2020 %>%
+  select(
+    trip_id = ride_id,
+    start_time,
+    end_time,
+    rideable_type,
+    start_station_name,
+    start_station_id,
+    end_station_name,
+    end_station_id,
+    user_type = member_casual
+  ) %>%
+  mutate(across(c(trip_id, rideable_type, start_station_id, end_station_id), as.character))
+  
+all_trips <- bind_rows(Q1_2019_lean, Q2_2019_lean, Q3_2019_lean, Q4_2019_lean, Q1_2020_lean)
+
+
+# Nota: Hemos convertido 'bikeid' (un número) y 'rideable_type' (un texto) a una sola columna estandarizada.
+# Para que la unión funcione, R convertirá todos los 'bikeid' a texto, lo cual está bien para este análisis.
+
+### 3.4. Limpieza del Entorno de Trabajo
+Ahora que todos los datos han sido limpiados y unificados en el dataframe `all_trips`, podemos eliminar los dataframes intermedios para liberar memoria RAM y mantener el entorno de trabajo ordenado.
+         
+# 4. Analizar
+
+Con nuestros datos limpios y unificados en el dataframe `all_trips`, comenzamos la fase de análisis. El objetivo es realizar cálculos y agregaciones para entender cómo los miembros anuales (`member`) y los ciclistas ocasionales (`casual`) usan las bicicletas de manera diferente.
+
+### 4.1. Análisis Descriptivo Inicial
+Primero, calcularemos algunas estadísticas descriptivas básicas sobre la duración de los viajes (`ride_length_mins`) para tener una idea general de los datos.
+
+
+### 4.2. Agregación de Datos por Tipo de Usuario
+
+Ahora, vamos al núcleo de nuestra pregunta de negocio. Agregaremos los datos para comparar el comportamiento de los `member` y los `casual`. Calcularemos:
+1.  El número total de viajes.
+2.  La duración promedio de los viajes.
+
+Esto nos dará nuestra primera gran pista sobre las diferencias entre ambos grupos.
+
+### 4.3. Análisis por Día de la Semana
+
+Para profundizar más, analicemos si el comportamiento cambia durante la semana. Agruparemos por tipo de usuario y por día de la semana.
+
+## 4.4. Interpretación y Limpieza de Datos Adicional
+
+Al revisar los resultados de las agregaciones, se identificaron dos problemas de calidad de datos que deben ser corregidos:
+
+1.  **Duraciones de Viaje Inválidas:** La tabla `summary_stats` muestra una duración mínima negativa (`-56.37 mins`) y una duración máxima extremadamente larga (`177200.4 mins`, que son más de 120 días). Estos son claramente errores en los datos (probablemente bicicletas robadas o con fallos en el sistema) que pueden distorsionar los promedios. Se procederá a filtrar los viajes que duraron menos de 1 minuto y más de 1 día (1440 minutos).
+
+2.  **Inconsistencia en Tipos de Usuario:** La tabla `analysis_by_usertype` muestra cuatro categorías de usuarios (`Customer`, `Subscriber`, `casual`, `member`). Conceptualmente, solo existen dos: los ocasionales (`Customer` y `casual`) y los miembros (`Subscriber` y `member`). Se deben unificar estas categorías.
+
+## 4.5. Conclusiones del Análisis
+
+Con los datos ya limpios y re-analizados, podemos extraer las siguientes conclusiones clave para responder a la pregunta de negocio:
+
+* **Comportamiento de los Miembros (`member`):**
+    * **Volumen:** Realizan la gran mayoría de los viajes, lo que indica un uso frecuente y regular del servicio.
+    * **Duración:** Sus viajes son significativamente más cortos, con un promedio de **~12-14 minutos**.
+    * **Patrón Semanal:** El uso es alto y constante durante la semana laboral (lunes a viernes), lo que sugiere un fuerte uso para **traslados al trabajo (commuting)**.
+
+* **Comportamiento de los Ocasionales (`casual`):**
+    * **Volumen:** Realizan menos viajes en total que los miembros.
+    * **Duración:** Sus viajes son mucho más largos, con promedios que superan los **30 minutos** (incluso después de la limpieza de datos).
+    * **Patrón Semanal:** El uso es marcadamente más alto durante los **fines de semana** (sábado y domingo), lo que indica un uso principalmente para **ocio y turismo**.
+    
+# 5. Compartir
+
+En esta fase, crearemos visualizaciones para comunicar nuestros hallazgos. El objetivo es mostrar de manera clara y efectiva las diferencias de comportamiento entre los miembros y los ciclistas ocasionales.
+
+## 5.1. Gráfico 1: Número Total de Viajes por Tipo de Usuario
+
+Nuestro primer hallazgo fue la diferencia en el volumen de uso. Un gráfico de barras es ideal para comparar el número total de viajes entre los dos grupos.
+
+## 5.2. Gráfico 2: Duración Promedio de Viaje por Tipo de Usuario
+
+El segundo hallazgo clave fue la diferencia en la duración de los viajes. Otro gráfico de barras nos ayudará a visualizar esta comparación.
+
+## 5.3. Gráfico 3: Patrones de Uso Durante la Semana
+
+Finalmente, el hallazgo más revelador fue cómo cambia el comportamiento durante la semana. Un gráfico de barras agrupado es perfecto para mostrar el número de viajes por día, diferenciando entre miembros y ocasionales.
+
+# 6. Actuar
+
+La fase final del análisis consiste en traducir los hallazgos en recomendaciones de negocio accionables. El objetivo es proporcionar a la dirección de marketing de Cyclistic una estrategia clara para convertir a los ciclistas ocasionales en miembros.
+
+## 6.1. Tres Recomendaciones Principales
+
+**Recomendación 1: Lanzar una campaña de marketing de "Membresía para Commuters".**
+
+* [cite_start]**Evidencia:** Los miembros usan las bicicletas de manera constante de lunes a viernes[cite: 1], con viajes cortos de ~12 minutos, lo que sugiere un fuerte uso para ir al trabajo. [cite_start]Los usuarios ocasionales no muestran este patrón. [cite: 1]
+* **Acción Sugerida:** Crear una campaña publicitaria digital (en redes sociales y por email) que se active durante los días de semana y que se enfoque en los beneficios de costo y conveniencia para los traslados diarios. El mensaje principal podría ser: *"¿Sabías que con la membresía anual, tus viajes al trabajo podrían costarte menos de un dólar? Ahorra tiempo y dinero en tus traslados diarios."*
+
+**Recomendación 2: Crear un nuevo producto de "Pase de Fin de Semana".**
+
+* [cite_start]**Evidencia:** Los usuarios ocasionales utilizan el servicio de forma masiva durante los sábados y domingos, con viajes muy largos. [cite: 1] Para ellos, una membresía anual puede parecer un compromiso demasiado grande si solo planean usar las bicicletas para ocio.
+* **Acción Sugerida:** Introducir un nuevo tipo de pase, como un "Pase de Fin de Semana" o una membresía mensual de menor costo. Esto actuaría como un producto "puente", convirtiendo a un usuario de un solo día en un cliente recurrente, lo que facilitaría una futura conversión a la membresía anual completa.
+
+**Recomendación 3: Ofrecer un descuento en la membresía basado en el comportamiento del usuario ocasional.**
+
+* **Evidencia:** Sabemos que los usuarios ocasionales disfrutan de viajes largos. Podemos usar este comportamiento como un gancho.
+* **Acción Sugerida:** Implementar una promoción dirigida a los usuarios que acaban de completar un viaje largo (ej. más de 30 minutos). Inmediatamente después de que terminen su viaje, podrían recibir una notificación en la app que diga: *"Disfrutaste tu paseo, ¿verdad? Hazte miembro hoy y te descontamos el costo de este viaje de tu membresía anual."* Esto capitaliza el sentimiento positivo del momento y muestra un beneficio inmediato.
